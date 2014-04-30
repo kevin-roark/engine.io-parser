@@ -47,6 +47,36 @@ describe('parser', function() {
     });
   });
 
+  it('should encode complex utf8 as blob', function(done) {
+    encPayloadB([{type: 'message', data: 'utf8 — string'}], function(data) {
+      var fr = new FileReader();
+      fr.onload = function() {
+        decPayloadB(this.result, function(packet, index, total) {
+        expect(total).to.eql(1);
+        expect(packet.type).to.eql('message');
+        expect(packet.data).to.eql('utf8 — string');
+        done();
+        });
+      };
+      fr.readAsArrayBuffer(data);
+    });
+  });
+
+  it('should encode complex utf8 as blob', function(done) {
+    encPayloadB([{type: 'message', data: '\uD800-\uDB7F\uDB80-\uDBFF\uDC00-\uDFFF\uE000-\uF8FF'}], function(data) {
+      var fr = new FileReader();
+      fr.onload = function() {
+        decPayloadB(this.result, function(packet, index, total) {
+        expect(total).to.eql(1);
+        expect(packet.type).to.eql('message');
+        expect(packet.data).to.eql('\uD800-\uDB7F\uDB80-\uDBFF\uDC00-\uDFFF\uE000-\uF8FF');
+        done();
+        });
+      };
+      fr.readAsArrayBuffer(data);
+    });
+  });
+
   it('should encode mixed binary and string contents as blob', function(done) {
     var firstBuffer = new Int8Array(123);
     for (var i = 0; i < firstBuffer.length; i++) firstBuffer[i] = i;

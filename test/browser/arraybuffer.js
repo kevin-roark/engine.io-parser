@@ -39,13 +39,13 @@ describe('parser', function() {
         });
     });
   });
-  
+
   it('should encode binary contents as arraybuffer', function(done) {
     var firstBuffer = new Int8Array(5);
     for (var i = 0; i < firstBuffer.length; i++) firstBuffer[i] = i;
     var secondBuffer = new Int8Array(4);
     for (var i = 0; i < secondBuffer.length; i++) secondBuffer[i] = firstBuffer.length + i;
-  
+
     encPayloadAB([{ type: 'message', data: firstBuffer.buffer }, { type: 'message', data: secondBuffer.buffer }], function(data) {
       decPayloadB(data,
         function(packet, index, total) {
@@ -60,11 +60,33 @@ describe('parser', function() {
         });
     });
   });
-  
+
+  it('should encode complex utf8 as arraybuffer', function(done) {
+    encPayloadAB([{type: 'message', data: 'utf8 — string'}], function(data) {
+      decPayloadB(data, function(packet, index, total) {
+        expect(total).to.eql(1);
+        expect(packet.type).to.eql('message');
+        expect(packet.data).to.eql('utf8 — string');
+        done();
+      });
+    });
+  });
+
+  it('should deal with emoji as arraybuffer', function(done) {
+    encPayloadAB([{type: 'message', data: '\uD800-\uDB7F\uDB80-\uDBFF\uDC00-\uDFFF\uE000-\uF8FF'}], function(data) {
+      decPayloadB(data, function(packet, index, total) {
+        expect(total).to.eql(1);
+        expect(packet.type).to.eql('message');
+        expect(packet.data).to.eql('\uD800-\uDB7F\uDB80-\uDBFF\uDC00-\uDFFF\uE000-\uF8FF');
+        done();
+      });
+    });
+  });
+
   it('should encode mixed binary and string contents as arraybuffer', function(done) {
     var firstBuffer = new Int8Array(123);
     for (var i = 0; i < firstBuffer.length; i++) firstBuffer[i] = i;
-  
+
     encPayloadAB([{ type: 'message', data: firstBuffer.buffer }, { type: 'message', data: 'hello' }, { type: 'close' } ], function(data) {
       decPayloadB(data,
         function(packet, index, total) {
